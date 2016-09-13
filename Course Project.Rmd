@@ -1,0 +1,134 @@
+---
+title: "Regression Models Course Project"
+author: "Mahesh"
+date: "12 September 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+Motor Trend, a magazine about the automobile industry, is interested in 
+exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). The questions of interest are:  
+
+1. “Is an automatic or manual transmission better for MPG”
+2. "Quantify the MPG difference between automatic and manual transmissions" 
+
+### DataSet
+
+mtcars
+
+```{r}
+library(ggplot2)
+data(mtcars)
+
+
+```
+
+Inspect the data  
+
+```{r}
+head(mtcars)
+str(mtcars)
+
+boxplot(mpg ~ am, data = mtcars, xlab="Transmission (0 = Automatic, 1 = Manual)", ylab="MPG",main="Boxplot of MPG vs. Transmission")
+
+pairs(mtcars, panel=panel.smooth, main="Pair Graph of all variables")
+```
+
+Convert the variables of interest into factors for analysis  
+
+```{r}
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+```
+
+mean of manual and auto mpg  
+
+```{r}
+# Automatic mpg mean
+round(mean(mtcars[mtcars$am==0, "mpg"]),2)
+
+# Manual mpg mean
+round(mean(mtcars[mtcars$am==1, "mpg"]),2)
+```
+
+## Regression Model
+t test   
+
+```{r}
+t.test(mpg ~ am, data = mtcars)
+```
+
+p-value is 0.001374 and we can reject null hypothesis. mean difference is 7
+
+
+```{r}
+par(mfrow=c(2,2))
+fullmodel <- lm(mpg ~ ., data=mtcars)
+summary(fullmodel)
+plot(fullmodel)
+```
+
+The above model explains 78% variance of mpg variable 
+Residual standard error: 2.833 on 15 degrees of freedom, we need to find 
+alternate model  
+
+```{r}
+par(mfrow=c(2,2))
+altmodel <- step(lm(mpg ~ ., data=mtcars),k =3)
+summary(altmodel)
+plot(altmodel)
+```
+
+The above model explains 84% variance of mpg variable 
+
+```{r}
+par(mfrow=c(2,2))
+altmodel2 <- lm(mpg ~ wt*am + qsec, data=mtcars)
+summary(altmodel2)
+plot(altmodel2)
+```
+
+The above model explains 88% variance of mpg variable 
+
+```{r}
+par(mfrow=c(2,2))
+altmodel3 <- lm(mpg ~ am, data=mtcars)
+summary(altmodel3)
+plot(altmodel3)
+```
+
+The above model explains 34% variance of mpg variable  
+
+Now we try to select the final model
+
+```{r}
+anova(altmodel3,altmodel,fullmodel,altmodel2)
+summary(altmodel2)$coef
+```
+
+From the above "mpg ~ qsec + wt*am"" has the  highest adjusted R-Squared values  
+
+above model suggest that cars with manual transmission add more mileage on 
+decreasing weight with the equation 14.08 -2.94*wt.
+
+```{r}
+max(cooks.distance(altmodel2))
+par(mfrow=c(1,1))
+plot(cooks.distance(altmodel2))
+```
+
+
+
+
+
+
+
+
